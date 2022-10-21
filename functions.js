@@ -27,6 +27,7 @@ function validateBearerToken() {
   });
 }
 
+//This makes the query API request to VoiceBase and collects the query results.
 function queryAPIRequest() {
   var settings = {
     "crossDomain": true,
@@ -68,10 +69,43 @@ function queryAPIRequest() {
   });
 }
 
-function ingestCSV() {
-  alert("grabbed it");
-}
+/* This is needed for csv reading */
+const form = document.querySelector("#csvScoresForm");
+const csvFileInput = document.querySelector("#csvScores");
+const csvtextArea = document.querySelector("#csvResult");
 
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+  const file = csvFileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    const csvArray = csvToArr(e.target.result, ",");
+    console.log("textarea: ", csvtextArea);
+    csvtextArea.value = JSON.stringify(csvArray, null, 4).replace(/\\r/g, "");
+    console.log(csvArray);
+  };
+
+  reader.readAsText(file);
+});
+
+function csvToArr(stringVal, splitter) {
+  const [keys, ...rest] = stringVal
+    .trim()
+    .split("\n")
+    .map((item) => item.split(splitter));
+
+  const formedArr = rest.map((item) => {
+    const object = {};
+    keys.forEach((key, index) => (object[key] = item.at(index)));
+    return object;
+  });
+  return formedArr;
+}
+/* end needed for csv reading */
+
+
+//Proably not needed
 function outputResults() {
     var divContents = document.getElementById("Accuracy").innerHTML = 'Accuracy: X%';
     var divContents = document.getElementById("Total").innerHTML = 'Total Scored Calls:';
@@ -85,7 +119,7 @@ function outputResults() {
     var divContents = document.getElementById("querylog").innerHTML = 'SELECT * by whatever blah blah';
 }
 
-//probably not needed?
+//Just using to show that we have the mediaIds from the query
 function printjobs() {
   var i = 0;
         document.getElementById(`mediaId0`).innerHTML = vbresponse.media[0].mediaId;

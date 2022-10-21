@@ -5,8 +5,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <script type="text/javascript" src="functions.js"></script>
-    <script src="jquery.js"></script>
 
     <title>LivePerson Conversational Query Accuracy Tester</title>
 </head>
@@ -26,12 +24,12 @@
                     <div id="btvalidationresponse" class="btvalidationresponse"></div>
                 </div>
                 <div id="csvScoresFormContainer" class="csvScoresFormContainer">
-                    <form id="csvScoresForm" class="csvScoresForm" onsubmit="return false;">
+                    <form id="csvScoresForm" class="csvScoresForm">
                         <label for="csvScores">CSV of Human Scores:</label><br>
-                        <input type="file" id="csvScores" name="csvScores" value=""><br>
-                        <input type="submit" value="Submit" onclick="ingestCSV();">
+                        <input type="file" id="csvScores" accept=".csv" name="csvScores" value=""><br>
+                        <input type="submit" value="Submit">
                     </form>
-                    <div id="csvvalidationresponse" class="csvvalidationresponse"></div>
+                    <div><textarea name="" id="csvResult" cols="30" rows="7" readonly></textarea></div>
                 </div>
                 <div class="csvpreview">
                     <div>Total Human Scores: <span class="class="previewtotalscores previewscores"></span></div>
@@ -77,6 +75,8 @@
         </div>
         <div class="right-margin"></div>
     </div>
-    
+
+    <script type="text/javascript" src="functions.js"></script>
+    <script src="jquery.js"></script>
 </body>
 </html>
