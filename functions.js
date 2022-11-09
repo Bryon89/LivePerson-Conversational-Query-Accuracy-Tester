@@ -1,3 +1,4 @@
+//Global Variables
 var bearertoken;
 var vbresponse;
 var vbqueryresponse;
