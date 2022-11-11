@@ -65,3 +65,19 @@ h5 {
 p {
     margin: 10px;
 }
+
+.spacer {
+    height: 10px;
+}
+
+.good {
+    background-color:lightgreen;
+}
+
+.bad {
+    background-color:red;
+}
+
+.important {
+    color:blue;
+}

@@ -2,6 +2,7 @@
 var bearertoken;
 var vbresponse;
 var vbqueryresponse;
+var humanScores = [];
 
 //This makes a quick API call to VoiceBase to check if the Bearer token is valid. It will print a success or failure response on the page.
 function validateBearerToken() {
@@ -28,11 +29,140 @@ function validateBearerToken() {
   });
 }
 
+
+//Calculate Accuracy, TP, FP, TN, FN
+function calculateAccuracy(hitMediaIds, humanScores) {
+
+
+  var TP = calcTP(hitMediaIds, humanScores);
+  var TN = calcTN(hitMediaIds, humanScores);
+  var FP = calcFP(hitMediaIds, humanScores);
+  var FN = calcFN(hitMediaIds, humanScores);
+
+  var Accuracy = ((TP+TN)/(TP+TN+FP+FN));
+  var Total = TP + TN + FP + FN;
+
+  console.log("TP IS");
+  console.log(TP);
+  console.log("TN IS");
+  console.log(calcTN(hitMediaIds, humanScores));
+  console.log("FP IS");
+  console.log(calcFP(hitMediaIds, humanScores));
+  console.log("FN IS");
+  console.log(calcFN(hitMediaIds, humanScores));
+
+  document.getElementById(`TP`).innerText = TP;
+  document.getElementById(`TN`).innerText = TN;
+  document.getElementById(`FP`).innerText = FP;
+  document.getElementById(`FN`).innerText = FN;
+  document.getElementById(`Accuracy`).innerText = Accuracy;
+  document.getElementById(`Total`).innerText = Total;
+
+}
+
+function calcTP(hitMediaIds, humanScores) {
+  var i = 0;
+  var TP = 0;
+
+  while (i < humanScores.length) {
+    if (humanScores[i].score == 1) {
+      var j = 0;
+      while (j < hitMediaIds.length) {
+        if (humanScores[i].mediaId == hitMediaIds[j]) {
+          TP++;
+          j++;
+        }
+        j++;
+        }
+      i++; 
+      } else {
+        i++;
+      }
+    } 
+    return TP;
+}
+
+function calcFN(hitMediaIds, humanScores) {
+  var i = 0;
+  var FN = 0;
+
+  while (i < humanScores.length) {
+    if (humanScores[i].score == 1) {
+      var j = 0;
+      var DQ = 0;
+      while (j < hitMediaIds.length) {
+        if (humanScores[i].mediaId == hitMediaIds[j]) {
+          j++;
+        } else if (humanScores[i].mediaId != hitMediaIds[j]) {
+          DQ++;
+          j++;
+        }
+        }
+        if (DQ == j) {
+          FN++;
+        }
+      i++; 
+      } else {
+        i++;
+      }
+    } 
+    return FN;
+}
+
+function calcTN(hitMediaIds, humanScores) {
+  var i = 0;
+  var TN = 0;
+
+  while (i < humanScores.length) {
+    if (humanScores[i].score == 0) {
+      var j = 0;
+      var DQ = 0;
+      while (j < hitMediaIds.length) {
+        if (humanScores[i].mediaId == hitMediaIds[j]) {
+          j++;
+        } else if (humanScores[i].mediaId != hitMediaIds[j]) {
+          j++;
+          DQ++;
+        }
+        }
+        if (DQ == j) {
+          TN++;
+        }
+      i++; 
+      } else {
+        i++;
+      }
+    } 
+    return TN;
+}
+
+function calcFP(hitMediaIds, humanScores) {
+  var i = 0;
+  var FP = 0;
+
+  while (i < humanScores.length) {
+    if (humanScores[i].score == 0) {
+      var j = 0;
+      var dq = 0;
+      while (j < hitMediaIds.length) {
+        if (humanScores[i].mediaId == hitMediaIds[j]) {
+          j++;
+          FP++;
+        }
+        j++;
+        }
+      i++; 
+      }
+      i++;
+    } 
+    return FP;
+}
+
 //This makes the query API request to VoiceBase and collects the query results.
 function queryAPIRequest() {
   var settings = {
     "crossDomain": true,
-    "url": "https://apis.voicebase.com/v3/analytics/vbql",
+    "url": "https://apis.voicebase.com/v3/analytics/vbql?limit=999",
     "method": "POST",
     "headers": {
       "accept": "application/json",
@@ -43,14 +173,18 @@ function queryAPIRequest() {
     "contentType": false,
     success: function(data) {
       window.vbqueryresponse = data;
-      document.getElementById(`querylog`).innerHTML = document.getElementById("Query").value;
-      document.getElementById(`Accuracy`).innerHTML = "X%";
-      document.getElementById(`Total`).innerHTML = "10";
-      document.getElementById(`TP`).innerHTML = "W";
-      document.getElementById(`TN`).innerHTML = "X";
-      document.getElementById(`FP`).innerHTML = "Y";
-      document.getElementById(`FN`).innerHTML = "Z";
-      document.getElementById(`FN`).innerHTML = vbqueryresponse.rows[0].mediaId;
+      var hits = [];
+      hits = vbqueryresponse.rows;
+      var i = 0;
+      var hitMediaIds = [];
+      while (i < hits.length) {
+        hitMediaIds[i] = vbqueryresponse.rows[i].mediaId;
+        console.log(vbqueryresponse.rows[i].mediaId);
+        i++;
+      }
+      document.getElementById(`querylog`).innerText = document.getElementById("Query").value;
+      calculateAccuracy(hitMediaIds, humanScores);
+
       var arr = [];
       for (var i = 0; i < 5; i++)
       {
@@ -59,10 +193,10 @@ function queryAPIRequest() {
       arr.forEach(function(entry) {
         console.log(entry);
       });
-      document.getElementById(`allhits`).innerHTML = arr;
+      document.getElementById(`allhits`).innerText = hitMediaIds;
     },
     error: function(nodata) {
-      document.getElementById(`querylog`).innerHTML = "The query API had an error.";
+      document.getElementById(`querylog`).innerText = "The query API had an error.";
     }
   }
   $.ajax(settings).done(function (response) {
@@ -70,7 +204,7 @@ function queryAPIRequest() {
   });
 }
 
-/* This is needed for csv reading */
+/* Read  csv and add scores to global humanScores array */
 const form = document.querySelector("#csvScoresForm");
 const csvFileInput = document.querySelector("#csvScores");
 const csvtextArea = document.querySelector("#csvResult");
@@ -82,9 +216,8 @@ form.addEventListener("submit", function (e) {
 
   reader.onload = function (e) {
     const csvArray = csvToArr(e.target.result, ",");
-    console.log("textarea: ", csvtextArea);
-    csvtextArea.value = JSON.stringify(csvArray, null, 4).replace(/\\r/g, "");
-    console.log(csvArray);
+    csvArray.value = JSON.stringify(csvArray, null, 2).replaceAll("\\r","");
+    humanScores = JSON.parse(csvArray.value);
   };
 
   reader.readAsText(file);
@@ -104,24 +237,3 @@ function csvToArr(stringVal, splitter) {
   return formedArr;
 }
 /* end needed for csv reading */
-
-
-//Proably not needed
-function outputResults() {
-    var divContents = document.getElementById("Accuracy").innerHTML = 'Accuracy: X%';
-    var divContents = document.getElementById("Total").innerHTML = 'Total Scored Calls:';
-
-    var divContents = document.getElementById("TP").innerHTML = 'True Positives: Y';
-    var divContents = document.getElementById("TN").innerHTML = 'True Negatives: Z';
-
-    var divContents = document.getElementById("FP").innerHTML = 'False Positives: ZA';
-    var divContents = document.getElementById("FN").innerHTML = 'False Negatives: ZB';
-
-    var divContents = document.getElementById("querylog").innerHTML = 'SELECT * by whatever blah blah';
-}
-
-//Just using to show that we have the mediaIds from the query
-function printjobs() {
-  var i = 0;
-        document.getElementById(`mediaId0`).innerHTML = vbresponse.media[0].mediaId;
-}
